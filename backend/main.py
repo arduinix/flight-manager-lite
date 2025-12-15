@@ -231,6 +231,40 @@ def generate_charts(flight_id: str, db: Session = Depends(get_db)):
     if not csv_files:
         raise HTTPException(status_code=400, detail="No CSV files found for this flight")
     
+    # Get existing charts for this flight
+    existing_charts = db.query(Chart).filter(Chart.flight_id == flight_id).all()
+    
+    # Check if charts need to be regenerated
+    needs_regeneration = False
+    
+    if existing_charts:
+        # Verify that all chart files still exist on disk
+        all_charts_exist = all(os.path.exists(chart.file_path) for chart in existing_charts)
+        if not all_charts_exist:
+            # Some chart files are missing, need to regenerate
+            needs_regeneration = True
+        else:
+            # Get the latest chart creation time
+            latest_chart_time = max(chart.created_at for chart in existing_charts)
+            # Get the latest CSV upload time
+            latest_csv_time = max(cf.uploaded_at for cf in csv_files)
+            
+            # If any CSV was uploaded after charts were created, regenerate
+            if latest_csv_time > latest_chart_time:
+                needs_regeneration = True
+            # Charts are up to date - return existing charts
+            else:
+                return existing_charts
+    
+    # Delete existing charts if we need to regenerate
+    if needs_regeneration and existing_charts:
+        for chart in existing_charts:
+            # Delete file from disk
+            if os.path.exists(chart.file_path):
+                os.remove(chart.file_path)
+            db.delete(chart)
+        db.commit()
+    
     # Create charts directory for this flight
     payload_dir = os.path.join(FLIGHTS_DIR, db_flight.payload_id)
     flight_dir = os.path.join(payload_dir, db_flight.id)
