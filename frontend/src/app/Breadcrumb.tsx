@@ -25,16 +25,15 @@ export default function Breadcrumb() {
   const [flightCache, setFlightCache] = useState<Record<string, string>>({})
   const fetchingRef = useRef<Set<string>>(new Set())
   
-  // Don't show breadcrumb on home page
-  if (pathname === '/') {
-    return null
-  }
-
   // Split pathname into segments and filter out empty strings
   const pathSegments = pathname.split('/').filter(Boolean)
   
   // Identify which segments need data fetching
   useEffect(() => {
+    // Don't fetch on home page
+    if (pathname === '/') {
+      return
+    }
     const fetchData = async () => {
       const payloadIds: string[] = []
       const flightIds: string[] = []
@@ -114,6 +113,11 @@ export default function Breadcrumb() {
     
     fetchData()
   }, [pathname]) // Re-fetch when pathname changes
+  
+  // Don't show breadcrumb on home page
+  if (pathname === '/') {
+    return null
+  }
   
   // Build breadcrumb items
   const breadcrumbItems = [

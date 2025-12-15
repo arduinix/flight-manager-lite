@@ -312,6 +312,21 @@ def get_chart_file(chart_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Chart file not found")
 
 
+@app.delete("/api/charts/{chart_id}")
+def delete_chart(chart_id: str, db: Session = Depends(get_db)):
+    db_chart = db.query(Chart).filter(Chart.id == chart_id).first()
+    if not db_chart:
+        raise HTTPException(status_code=404, detail="Chart not found")
+    
+    # Delete file from disk
+    if os.path.exists(db_chart.file_path):
+        os.remove(db_chart.file_path)
+    
+    db.delete(db_chart)
+    db.commit()
+    return {"message": "Chart deleted successfully"}
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)

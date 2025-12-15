@@ -28,6 +28,7 @@ import {
   Upload as UploadIcon,
   Delete as DeleteIcon,
   BarChart as BarChartIcon,
+  DeleteOutline as DeleteOutlineIcon,
 } from '@mui/icons-material'
 import Link from 'next/link'
 import axios from 'axios'
@@ -71,6 +72,10 @@ export default function FlightDetailPage() {
   const [charts, setCharts] = useState<Chart[]>([])
   const [uploading, setUploading] = useState(false)
   const [generating, setGenerating] = useState(false)
+  const [deleteChartDialog, setDeleteChartDialog] = useState<{ open: boolean; chart: Chart | null }>({
+    open: false,
+    chart: null,
+  })
 
   const fetchFlight = useCallback(async () => {
     try {
@@ -158,6 +163,27 @@ export default function FlightDetailPage() {
     } finally {
       setGenerating(false)
     }
+  }
+
+  const handleDeleteChartClick = (chart: Chart) => {
+    setDeleteChartDialog({ open: true, chart })
+  }
+
+  const handleDeleteChartConfirm = async () => {
+    if (!deleteChartDialog.chart) return
+
+    try {
+      await axios.delete(`${API_BASE_URL}/api/charts/${deleteChartDialog.chart.id}`)
+      fetchCharts()
+      setDeleteChartDialog({ open: false, chart: null })
+    } catch (error) {
+      console.error('Error deleting chart:', error)
+      alert('Error deleting chart. Please try again.')
+    }
+  }
+
+  const handleDeleteChartCancel = () => {
+    setDeleteChartDialog({ open: false, chart: null })
   }
 
   const formatDate = (dateString: string) => {
@@ -256,10 +282,20 @@ export default function FlightDetailPage() {
           {charts.length > 0 ? (
             <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 2 }}>
               {charts.map((chart) => (
-                <Paper key={chart.id} sx={{ p: 2 }}>
-                  <Typography variant="subtitle1" gutterBottom>
-                    {chart.name}
-                  </Typography>
+                <Paper key={chart.id} sx={{ p: 2, position: 'relative' }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                    <Typography variant="subtitle1">
+                      {chart.name}
+                    </Typography>
+                    <IconButton
+                      size="small"
+                      onClick={() => handleDeleteChartClick(chart)}
+                      sx={{ ml: 1 }}
+                      color="error"
+                    >
+                      <DeleteOutlineIcon />
+                    </IconButton>
+                  </Box>
                   <Typography variant="caption" color="text.secondary">
                     Created: {formatDate(chart.created_at)}
                   </Typography>
@@ -282,6 +318,22 @@ export default function FlightDetailPage() {
           )}
         </Box>
       </Container>
+
+      <Dialog open={deleteChartDialog.open} onClose={handleDeleteChartCancel}>
+        <DialogTitle>Delete Chart</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to delete the chart &quot;{deleteChartDialog.chart?.name}&quot;?
+            This action cannot be undone.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDeleteChartCancel}>Cancel</Button>
+          <Button onClick={handleDeleteChartConfirm} variant="contained" color="error">
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   )
 }
