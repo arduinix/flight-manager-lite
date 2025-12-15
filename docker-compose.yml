@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  flight-manager:
+    build: .
+    container_name: flight-manager-lite
+    ports:
+      - "80:80"
+    volumes:
+      - flight-data:/app/data
+      - flight-db:/app
+    environment:
+      - DATABASE_URL=sqlite:///./flight_manager.db
+      - FLIGHTS_DIR=/app/data/flights
+      - CHART_SCRIPTS_DIR=/app/chart_scripts
+      - CHARTS_DIR=/app/data/charts
+    restart: unless-stopped
+
+volumes:
+  flight-data:
+  flight-db:
+
