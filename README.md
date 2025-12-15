@@ -26,12 +26,28 @@ A single-container analysis tool for managing model rocket payloads and flights.
 
 ### Running the Application
 
+#### Production Mode
+
 1. Build and start the container:
 ```bash
 docker-compose up -d --build
 ```
 
 2. Access the application at `http://localhost`
+
+#### Development Mode (with Auto-Reload)
+
+For development with automatic code reloading:
+
+```bash
+docker-compose -f docker-compose.dev.yml up --build
+```
+
+This starts:
+- **Frontend**: Next.js dev server on http://localhost:3000 (with hot-reload)
+- **Backend**: FastAPI on http://localhost:8000 (with auto-reload)
+
+See [README-DEV.md](README-DEV.md) for more details.
 
 ### Development
 

@@ -22,6 +22,9 @@ import {
   DialogContent,
   DialogActions,
   TextField,
+  Modal,
+  Backdrop,
+  Fade,
 } from '@mui/material'
 import {
   Add as AddIcon,
@@ -46,6 +49,8 @@ export default function PayloadsListClient() {
   const [payloads, setPayloads] = useState<Payload[]>([])
   const [openDialog, setOpenDialog] = useState(false)
   const [editingPayload, setEditingPayload] = useState<Payload | null>(null)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [payloadToDelete, setPayloadToDelete] = useState<Payload | null>(null)
   const [formData, setFormData] = useState({
     name: '',
     owner: '',
@@ -108,18 +113,28 @@ export default function PayloadsListClient() {
     }
   }
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this payload? All associated flights will also be deleted.')) {
-      return
-    }
+  const handleDeleteClick = (payload: Payload) => {
+    setPayloadToDelete(payload)
+    setDeleteDialogOpen(true)
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!payloadToDelete) return
 
     try {
-      await axios.delete(`${API_BASE_URL}/api/payloads/${id}`)
+      await axios.delete(`${API_BASE_URL}/api/payloads/${payloadToDelete.id}`)
       fetchPayloads()
+      setDeleteDialogOpen(false)
+      setPayloadToDelete(null)
     } catch (error) {
       console.error('Error deleting payload:', error)
       alert('Error deleting payload. Please try again.')
     }
+  }
+
+  const handleDeleteCancel = () => {
+    setDeleteDialogOpen(false)
+    setPayloadToDelete(null)
   }
 
   return (
@@ -164,7 +179,7 @@ export default function PayloadsListClient() {
                     <IconButton size="small" onClick={() => handleOpenDialog(payload)} sx={{ mr: 1 }}>
                       <EditIcon />
                     </IconButton>
-                    <IconButton size="small" onClick={() => handleDelete(payload.id)}>
+                    <IconButton size="small" onClick={() => handleDeleteClick(payload)}>
                       <DeleteIcon />
                     </IconButton>
                   </TableCell>
@@ -215,6 +230,59 @@ export default function PayloadsListClient() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <Modal
+        open={deleteDialogOpen}
+        onClose={handleDeleteCancel}
+        closeAfterTransition
+        slots={{ backdrop: Backdrop }}
+        slotProps={{
+          backdrop: {
+            timeout: 500,
+          },
+        }}
+      >
+        <Fade in={deleteDialogOpen}>
+          <Box
+            sx={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              width: { xs: '90%', sm: 400 },
+              bgcolor: 'background.paper',
+              borderRadius: 2,
+              boxShadow: 24,
+              p: 0,
+              outline: 'none',
+            }}
+          >
+            <Box sx={{ p: 3, pb: 2 }}>
+              <Typography variant="h6" component="h2" gutterBottom>
+                Delete Payload
+              </Typography>
+              <Typography variant="body1" sx={{ mb: 2, mt: 2 }}>
+                Are you sure you want to delete <strong>{payloadToDelete?.name}</strong>?
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                All associated flights will also be deleted. This action cannot be undone.
+              </Typography>
+            </Box>
+            <Box sx={{ px: 3, pb: 3, pt: 1, display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+              <Button onClick={handleDeleteCancel} variant="outlined">
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleDeleteConfirm} 
+                color="error" 
+                variant="contained"
+              >
+                Delete
+              </Button>
+            </Box>
+          </Box>
+        </Fade>
+      </Modal>
     </>
   )
 }

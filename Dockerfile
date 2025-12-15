@@ -17,8 +17,8 @@ COPY frontend/ .
 # Build Next.js app
 RUN npm run build
 
-# Stage 2: Python backend and runtime
-FROM python:3.11-slim
+# Stage 2: Python backend base (for development)
+FROM python:3.11-slim AS python-base
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -34,6 +34,23 @@ COPY backend/requirements.txt .
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Copy nginx configuration
+COPY nginx/nginx.conf /etc/nginx/nginx.conf
+
+# Create data directories
+RUN mkdir -p /app/data/flights /app/data/charts && \
+    chmod -R 755 /app/data
+
+# Copy startup scripts
+COPY start.sh /app/start.sh
+COPY start-dev.sh /app/start-dev.sh
+RUN chmod +x /app/start.sh /app/start-dev.sh
+
+EXPOSE 80 8000
+
+# Stage 3: Production (builds frontend)
+FROM python-base AS production
+
 # Copy backend code
 COPY backend/ ./backend/
 
@@ -42,19 +59,6 @@ COPY chart_scripts/ ./chart_scripts/
 
 # Copy built frontend from builder stage
 COPY --from=frontend-builder /app/frontend/out /usr/share/nginx/html
-
-# Copy nginx configuration
-COPY nginx/nginx.conf /etc/nginx/nginx.conf
-
-# Create data directories
-RUN mkdir -p /app/data/flights /app/data/charts && \
-    chmod -R 755 /app/data
-
-# Copy startup script
-COPY start.sh /app/start.sh
-RUN chmod +x /app/start.sh
-
-EXPOSE 80
 
 CMD ["/app/start.sh"]
 

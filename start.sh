@@ -12,6 +12,9 @@ cleanup() {
 
 trap cleanup SIGTERM SIGINT
 
+# Create database directory if it doesn't exist
+mkdir -p /app/db
+
 # Start FastAPI in the background
 cd /app/backend
 python -m uvicorn main:app --host 0.0.0.0 --port 8000 &

@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  # Frontend dev server (Next.js with hot-reload)
+  frontend-dev:
+    image: node:20-alpine
+    container_name: flight-manager-frontend-dev
+    working_dir: /app/frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app/frontend
+      - /app/frontend/node_modules
+    command: sh -c "cp next.config.dev.js next.config.js 2>/dev/null || true && npm install && npm run dev"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    restart: unless-stopped
+
+  # Backend API with hot-reload
+  backend-dev:
+    build:
+      context: .
+      target: python-base
+    container_name: flight-manager-backend-dev
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app/backend
+      - ./chart_scripts:/app/chart_scripts
+      - flight-data:/app/data
+      - flight-db:/app/db
+    environment:
+      - DATABASE_URL=sqlite:///./db/flight_manager.db
+      - FLIGHTS_DIR=/app/data/flights
+      - CHART_SCRIPTS_DIR=/app/chart_scripts
+      - CHARTS_DIR=/app/data/charts
+      - DEV_MODE=true
+    restart: unless-stopped
+    command: /app/start-dev.sh
+
+volumes:
+  flight-data:
+  flight-db:
+
