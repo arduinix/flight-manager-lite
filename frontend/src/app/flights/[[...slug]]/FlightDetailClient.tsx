@@ -29,6 +29,8 @@ import {
   Delete as DeleteIcon,
   BarChart as BarChartIcon,
   DeleteOutline as DeleteOutlineIcon,
+  OpenInFull as OpenInFullIcon,
+  Close as CloseIcon,
 } from '@mui/icons-material'
 import Link from 'next/link'
 import axios from 'axios'
@@ -73,6 +75,10 @@ export default function FlightDetailPage() {
   const [uploading, setUploading] = useState(false)
   const [generating, setGenerating] = useState(false)
   const [deleteChartDialog, setDeleteChartDialog] = useState<{ open: boolean; chart: Chart | null }>({
+    open: false,
+    chart: null,
+  })
+  const [viewChartDialog, setViewChartDialog] = useState<{ open: boolean; chart: Chart | null }>({
     open: false,
     chart: null,
   })
@@ -186,6 +192,14 @@ export default function FlightDetailPage() {
     setDeleteChartDialog({ open: false, chart: null })
   }
 
+  const handleViewChart = (chart: Chart) => {
+    setViewChartDialog({ open: true, chart })
+  }
+
+  const handleCloseViewChart = () => {
+    setViewChartDialog({ open: false, chart: null })
+  }
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
     return date.toLocaleString()
@@ -282,19 +296,39 @@ export default function FlightDetailPage() {
           {charts.length > 0 ? (
             <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 2 }}>
               {charts.map((chart) => (
-                <Paper key={chart.id} sx={{ p: 2, position: 'relative' }}>
+                <Paper 
+                  key={chart.id} 
+                  sx={{ 
+                    p: 2, 
+                    position: 'relative',
+                    '&:hover': {
+                      boxShadow: 4,
+                    },
+                  }}
+                >
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
                     <Typography variant="subtitle1">
                       {chart.name}
                     </Typography>
-                    <IconButton
-                      size="small"
-                      onClick={() => handleDeleteChartClick(chart)}
-                      sx={{ ml: 1 }}
-                      color="error"
-                    >
-                      <DeleteOutlineIcon />
-                    </IconButton>
+                    <Box>
+                      <IconButton
+                        size="small"
+                        onClick={() => handleViewChart(chart)}
+                        sx={{ mr: 1 }}
+                        color="primary"
+                        title="Open in full screen"
+                      >
+                        <OpenInFullIcon />
+                      </IconButton>
+                      <IconButton
+                        size="small"
+                        onClick={() => handleDeleteChartClick(chart)}
+                        color="error"
+                        title="Delete chart"
+                      >
+                        <DeleteOutlineIcon />
+                      </IconButton>
+                    </Box>
                   </Box>
                   <Typography variant="caption" color="text.secondary">
                     Created: {formatDate(chart.created_at)}
@@ -333,6 +367,54 @@ export default function FlightDetailPage() {
             Delete
           </Button>
         </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={viewChartDialog.open}
+        onClose={handleCloseViewChart}
+        fullScreen
+      >
+        <DialogTitle>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Typography variant="h6">
+              {viewChartDialog.chart?.name}
+            </Typography>
+            <IconButton onClick={handleCloseViewChart} color="inherit">
+              <CloseIcon />
+            </IconButton>
+          </Box>
+        </DialogTitle>
+        <DialogContent 
+          sx={{ 
+            p: 0, 
+            display: 'flex', 
+            flexDirection: 'column',
+            flex: 1,
+            overflow: 'hidden',
+          }}
+        >
+          {viewChartDialog.chart && (
+            <Box 
+              sx={{ 
+                flex: 1, 
+                width: '100%', 
+                minHeight: 0,
+                display: 'flex',
+              }}
+            >
+              <iframe
+                src={`${API_BASE_URL}/api/charts/${viewChartDialog.chart.id}`}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  border: 'none',
+                  flex: 1,
+                }}
+                title={viewChartDialog.chart.name}
+              />
+            </Box>
+          )}
+        </DialogContent>
       </Dialog>
     </>
   )
