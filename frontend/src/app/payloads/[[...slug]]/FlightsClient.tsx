@@ -105,10 +105,18 @@ export default function FlightsPage() {
         custom_weight: flight.custom_weight?.toString() || '',
       })
     } else {
+      // Set default to current date and time based on browser locale
+      const now = new Date()
+      const year = now.getFullYear()
+      const month = String(now.getMonth() + 1).padStart(2, '0')
+      const day = String(now.getDate()).padStart(2, '0')
+      const hours = String(now.getHours()).padStart(2, '0')
+      const minutes = String(now.getMinutes()).padStart(2, '0')
+      
       setEditingFlight(null)
       setFormData({
-        flight_date: '',
-        flight_time: '',
+        flight_date: `${year}-${month}-${day}`,
+        flight_time: `${hours}:${minutes}`,
         location: '',
         custom_weight: '',
       })
