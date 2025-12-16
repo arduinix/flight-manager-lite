@@ -21,6 +21,30 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 def init_db():
     """Initialize the database tables"""
     Base.metadata.create_all(bind=engine)
+    
+    # Add new columns to existing flights table if they don't exist
+    # This handles schema migrations for SQLite
+    try:
+        from sqlalchemy import inspect, text
+        inspector = inspect(engine)
+        
+        # Check if flights table exists
+        if 'flights' in inspector.get_table_names():
+            columns = [col['name'] for col in inspector.get_columns('flights')]
+            
+            with engine.connect() as conn:
+                # Add name column if it doesn't exist
+                if 'name' not in columns:
+                    conn.execute(text('ALTER TABLE flights ADD COLUMN name VARCHAR'))
+                    conn.commit()
+                
+                # Add description column if it doesn't exist
+                if 'description' not in columns:
+                    conn.execute(text('ALTER TABLE flights ADD COLUMN description TEXT'))
+                    conn.commit()
+    except Exception as e:
+        # Migration failed, but this is not critical - log and continue
+        print(f"Warning: Could not migrate flights table: {e}")
 
 
 def get_db():

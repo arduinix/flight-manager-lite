@@ -1,5 +1,5 @@
-from pydantic import BaseModel
-from typing import Optional
+from pydantic import BaseModel, field_validator
+from typing import Optional, Any
 from datetime import datetime
 
 
@@ -32,6 +32,14 @@ class FlightBase(BaseModel):
     description: Optional[str] = None
     location: Optional[str] = None
     custom_weight: Optional[float] = None
+    
+    @field_validator('name', 'description', 'location', mode='before')
+    @classmethod
+    def empty_str_to_none(cls, v: Any) -> Optional[str]:
+        """Convert empty strings to None for optional string fields"""
+        if isinstance(v, str) and v.strip() == '':
+            return None
+        return v
 
 
 class FlightCreate(FlightBase):
@@ -44,6 +52,14 @@ class FlightUpdate(BaseModel):
     description: Optional[str] = None
     location: Optional[str] = None
     custom_weight: Optional[float] = None
+    
+    @field_validator('name', 'description', 'location', mode='before')
+    @classmethod
+    def empty_str_to_none(cls, v: Any) -> Optional[str]:
+        """Convert empty strings to None for optional string fields"""
+        if isinstance(v, str) and v.strip() == '':
+            return None
+        return v
 
 
 class Flight(FlightBase):

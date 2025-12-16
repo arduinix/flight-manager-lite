@@ -33,7 +33,7 @@ import {
 import Link from 'next/link'
 import axios from 'axios'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' ? '' : 'http://localhost:8000')
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 
 interface Flight {
   id: string
@@ -148,18 +148,45 @@ export default function FlightsPage() {
   const handleSave = async () => {
     try {
       const dateTime = new Date(`${formData.flight_date}T${formData.flight_time}`)
-      const flightData = {
+      
+      // Helper function to convert empty strings to undefined
+      const cleanString = (value: string) => {
+        const trimmed = value?.trim()
+        return trimmed && trimmed.length > 0 ? trimmed : undefined
+      }
+      
+      const flightData: any = {
         flight_date: dateTime.toISOString(),
-        name: formData.name || undefined,
-        description: formData.description || undefined,
-        location: formData.location || undefined,
-        custom_weight: formData.custom_weight ? parseFloat(formData.custom_weight) : undefined,
+      }
+      
+      // Only include optional fields if they have values
+      const name = cleanString(formData.name)
+      if (name !== undefined) flightData.name = name
+      
+      const description = cleanString(formData.description)
+      if (description !== undefined) flightData.description = description
+      
+      const location = cleanString(formData.location)
+      if (location !== undefined) flightData.location = location
+      
+      if (formData.custom_weight && formData.custom_weight.trim()) {
+        const weight = parseFloat(formData.custom_weight)
+        if (!isNaN(weight)) {
+          flightData.custom_weight = weight
+        }
       }
 
+      const url = editingFlight 
+        ? `${API_BASE_URL}/api/flights/${editingFlight.id}`
+        : `${API_BASE_URL}/api/flights`
+      
+      console.log('Saving flight to:', url)
+      console.log('Flight data:', flightData)
+      
       if (editingFlight) {
-        await axios.put(`${API_BASE_URL}/api/flights/${editingFlight.id}`, flightData)
+        await axios.put(url, flightData)
       } else {
-        await axios.post(`${API_BASE_URL}/api/flights`, {
+        await axios.post(url, {
           ...flightData,
           payload_id: payloadId,
         })
@@ -167,9 +194,22 @@ export default function FlightsPage() {
 
       fetchFlights()
       handleCloseDialog()
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving flight:', error)
-      alert('Error saving flight. Please try again.')
+      let errorMessage = 'Unknown error occurred'
+      
+      if (error.response) {
+        // Server responded with error status
+        errorMessage = error.response.data?.detail || error.response.data?.message || error.response.statusText || `Server error (${error.response.status})`
+      } else if (error.request) {
+        // Request made but no response received
+        errorMessage = 'Network error: Could not reach the server. Please check if the backend is running.'
+      } else {
+        // Error setting up the request
+        errorMessage = error.message || 'Error setting up request'
+      }
+      
+      alert(`Error saving flight: ${errorMessage}`)
     }
   }
 
@@ -315,6 +355,7 @@ export default function FlightsPage() {
             value={formData.location}
             onChange={(e) => setFormData({ ...formData, location: e.target.value })}
             sx={{ mb: 2 }}
+            placeholder="Optional location"
           />
           <TextField
             margin="dense"
@@ -324,7 +365,8 @@ export default function FlightsPage() {
             variant="outlined"
             value={formData.custom_weight}
             onChange={(e) => setFormData({ ...formData, custom_weight: e.target.value })}
-            helperText={payload?.default_weight ? `Default: ${payload.default_weight}g` : ''}
+            helperText={payload?.default_weight ? `Default: ${payload.default_weight}g (leave empty to use default)` : 'Optional - leave empty if not needed'}
+            placeholder="Optional custom weight"
           />
         </DialogContent>
         <DialogActions>
