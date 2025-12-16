@@ -66,6 +66,10 @@ export default function FlightsPage() {
   const [flights, setFlights] = useState<Flight[]>([])
   const [openDialog, setOpenDialog] = useState(false)
   const [editingFlight, setEditingFlight] = useState<Flight | null>(null)
+  const [deleteFlightDialog, setDeleteFlightDialog] = useState<{ open: boolean; flight: Flight | null }>({
+    open: false,
+    flight: null,
+  })
   const [formData, setFormData] = useState({
     flight_date: '',
     flight_time: '',
@@ -213,18 +217,25 @@ export default function FlightsPage() {
     }
   }
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this flight? All associated data will be deleted.')) {
-      return
-    }
+  const handleDeleteClick = (flight: Flight) => {
+    setDeleteFlightDialog({ open: true, flight })
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteFlightDialog.flight) return
 
     try {
-      await axios.delete(`${API_BASE_URL}/api/flights/${id}`)
+      await axios.delete(`${API_BASE_URL}/api/flights/${deleteFlightDialog.flight.id}`)
       fetchFlights()
+      setDeleteFlightDialog({ open: false, flight: null })
     } catch (error) {
       console.error('Error deleting flight:', error)
       alert('Error deleting flight. Please try again.')
     }
+  }
+
+  const handleDeleteCancel = () => {
+    setDeleteFlightDialog({ open: false, flight: null })
   }
 
   const formatDate = (dateString: string) => {
@@ -286,7 +297,7 @@ export default function FlightsPage() {
                     <IconButton size="small" onClick={() => handleOpenDialog(flight)} sx={{ mr: 1 }}>
                       <EditIcon />
                     </IconButton>
-                    <IconButton size="small" onClick={() => handleDelete(flight.id)}>
+                    <IconButton size="small" onClick={() => handleDeleteClick(flight)}>
                       <DeleteIcon />
                     </IconButton>
                   </TableCell>
@@ -373,6 +384,27 @@ export default function FlightsPage() {
           <Button onClick={handleCloseDialog}>Cancel</Button>
           <Button onClick={handleSave} variant="contained" disabled={!formData.flight_date || !formData.flight_time}>
             Save
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={deleteFlightDialog.open} onClose={handleDeleteCancel}>
+        <DialogTitle>Delete Flight</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to delete this flight?
+            {deleteFlightDialog.flight?.name && (
+              <> &quot;{deleteFlightDialog.flight.name}&quot;?</>
+            )}
+          </Typography>
+          <Typography sx={{ mt: 1 }} color="text.secondary">
+            All associated data (CSV files, charts) will be permanently deleted. This action cannot be undone.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDeleteCancel}>Cancel</Button>
+          <Button onClick={handleDeleteConfirm} variant="contained" color="error">
+            Delete
           </Button>
         </DialogActions>
       </Dialog>
