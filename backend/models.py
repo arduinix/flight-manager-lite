@@ -24,6 +24,8 @@ class Flight(Base):
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     payload_id = Column(String, ForeignKey("payloads.id"), nullable=False)
     flight_date = Column(DateTime, nullable=False)
+    name = Column(String, nullable=True)
+    description = Column(Text, nullable=True)
     location = Column(String, nullable=True)
     custom_weight = Column(Float, nullable=True)  # in grams, overrides payload default_weight
     

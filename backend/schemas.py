@@ -28,6 +28,8 @@ class Payload(PayloadBase):
 
 class FlightBase(BaseModel):
     flight_date: datetime
+    name: Optional[str] = None
+    description: Optional[str] = None
     location: Optional[str] = None
     custom_weight: Optional[float] = None
 
@@ -38,6 +40,8 @@ class FlightCreate(FlightBase):
 
 class FlightUpdate(BaseModel):
     flight_date: Optional[datetime] = None
+    name: Optional[str] = None
+    description: Optional[str] = None
     location: Optional[str] = None
     custom_weight: Optional[float] = None
 

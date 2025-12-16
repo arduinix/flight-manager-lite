@@ -39,6 +39,8 @@ interface Flight {
   id: string
   payload_id: string
   flight_date: string
+  name?: string
+  description?: string
   location?: string
   custom_weight?: number
 }
@@ -67,6 +69,8 @@ export default function FlightsPage() {
   const [formData, setFormData] = useState({
     flight_date: '',
     flight_time: '',
+    name: '',
+    description: '',
     location: '',
     custom_weight: '',
   })
@@ -101,6 +105,8 @@ export default function FlightsPage() {
       setFormData({
         flight_date: date.toISOString().split('T')[0],
         flight_time: date.toTimeString().split(' ')[0].substring(0, 5),
+        name: flight.name || '',
+        description: flight.description || '',
         location: flight.location || '',
         custom_weight: flight.custom_weight?.toString() || '',
       })
@@ -117,6 +123,8 @@ export default function FlightsPage() {
       setFormData({
         flight_date: `${year}-${month}-${day}`,
         flight_time: `${hours}:${minutes}`,
+        name: '',
+        description: '',
         location: '',
         custom_weight: '',
       })
@@ -130,6 +138,8 @@ export default function FlightsPage() {
     setFormData({
       flight_date: '',
       flight_time: '',
+      name: '',
+      description: '',
       location: '',
       custom_weight: '',
     })
@@ -140,6 +150,8 @@ export default function FlightsPage() {
       const dateTime = new Date(`${formData.flight_date}T${formData.flight_time}`)
       const flightData = {
         flight_date: dateTime.toISOString(),
+        name: formData.name || undefined,
+        description: formData.description || undefined,
         location: formData.location || undefined,
         custom_weight: formData.custom_weight ? parseFloat(formData.custom_weight) : undefined,
       }
@@ -210,7 +222,14 @@ export default function FlightsPage() {
             <TableBody>
               {flights.map((flight) => (
                 <TableRow key={flight.id}>
-                  <TableCell>{formatDate(flight.flight_date)}</TableCell>
+                  <TableCell>
+                    {formatDate(flight.flight_date)}
+                    {flight.name && (
+                      <Typography variant="body2" component="div" sx={{ mt: 0.5, fontWeight: 'medium' }}>
+                        {flight.name}
+                      </Typography>
+                    )}
+                  </TableCell>
                   <TableCell>{flight.location || '-'}</TableCell>
                   <TableCell>
                     {flight.custom_weight ? `${flight.custom_weight}g` : payload?.default_weight ? `${payload.default_weight}g` : '-'}
@@ -265,6 +284,28 @@ export default function FlightsPage() {
             onChange={(e) => setFormData({ ...formData, flight_time: e.target.value })}
             InputLabelProps={{ shrink: true }}
             sx={{ mb: 2 }}
+          />
+          <TextField
+            margin="dense"
+            label="Name"
+            fullWidth
+            variant="outlined"
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            sx={{ mb: 2 }}
+            placeholder="Optional flight name"
+          />
+          <TextField
+            margin="dense"
+            label="Description"
+            fullWidth
+            variant="outlined"
+            multiline
+            rows={3}
+            value={formData.description}
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            sx={{ mb: 2 }}
+            placeholder="Optional flight description"
           />
           <TextField
             margin="dense"

@@ -41,6 +41,8 @@ interface Flight {
   id: string
   payload_id: string
   flight_date: string
+  name?: string
+  description?: string
   location?: string
   custom_weight?: number
 }
@@ -225,7 +227,13 @@ export default function FlightDetailPage() {
               Flight Information
             </Typography>
             <Typography>Date & Time: {formatDate(flight.flight_date)}</Typography>
-            {flight.location && <Typography>Location: {flight.location}</Typography>}
+            {flight.name && <Typography sx={{ mt: 1, fontWeight: 'medium' }}>Name: {flight.name}</Typography>}
+            {flight.description && (
+              <Typography sx={{ mt: 1 }} color="text.secondary">
+                Description: {flight.description}
+              </Typography>
+            )}
+            {flight.location && <Typography sx={{ mt: 1 }}>Location: {flight.location}</Typography>}
           </Paper>
         )}
 
