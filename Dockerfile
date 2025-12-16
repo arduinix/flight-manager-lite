@@ -48,8 +48,24 @@ RUN chmod +x /app/start.sh /app/start-dev.sh
 
 EXPOSE 80 8000
 
-# Stage 3: Production (builds frontend)
-FROM python-base AS production
+# Stage 3: Production frontend (nginx serving static files)
+FROM nginx:alpine AS frontend-production
+
+# Copy built frontend from builder stage
+COPY --from=frontend-builder /app/frontend/out /usr/share/nginx/html
+
+# Create directory for charts (mounted via volume in docker-compose)
+RUN mkdir -p /app/data/charts
+
+# Copy nginx configuration (will be overridden by volume in docker-compose)
+COPY nginx/nginx.conf /etc/nginx/nginx.conf
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]
+
+# Stage 4: Production backend
+FROM python-base AS backend-production
 
 # Copy backend code
 COPY backend/ ./backend/
@@ -57,8 +73,7 @@ COPY backend/ ./backend/
 # Copy chart scripts
 COPY chart_scripts/ ./chart_scripts/
 
-# Copy built frontend from builder stage
-COPY --from=frontend-builder /app/frontend/out /usr/share/nginx/html
+EXPOSE 8000
 
-CMD ["/app/start.sh"]
+CMD ["sh", "-c", "cd /app/backend && python -m uvicorn main:app --host 0.0.0.0 --port 8000"]
 

@@ -1,10 +1,14 @@
+version: '3.8'
 
 services:
-  flight-manager:
-    build: .
-    container_name: flight-manager-lite
+  # Backend API service
+  backend:
+    build:
+      context: .
+      target: backend-production
+    container_name: flight-manager-backend
     ports:
-      - "80:80"
+      - "8000:8000"
     volumes:
       - flight-data:/app/data
       - flight-db:/app/db
@@ -13,6 +17,21 @@ services:
       - FLIGHTS_DIR=/app/data/flights
       - CHART_SCRIPTS_DIR=/app/chart_scripts
       - CHARTS_DIR=/app/data/charts
+    restart: unless-stopped
+
+  # Frontend service with nginx
+  frontend:
+    build:
+      context: .
+      target: frontend-production
+    container_name: flight-manager-frontend
+    ports:
+      - "80:80"
+    volumes:
+      - flight-data:/app/data
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - backend
     restart: unless-stopped
 
 volumes:
