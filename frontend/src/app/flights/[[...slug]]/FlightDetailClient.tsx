@@ -164,7 +164,6 @@ export default function FlightDetailPage() {
     try {
       await axios.post(`${API_BASE_URL}/api/flights/${flightId}/charts/generate`)
       fetchCharts()
-      alert('Charts generated successfully!')
     } catch (error: any) {
       console.error('Error generating charts:', error)
       alert(`Error generating charts: ${error.response?.data?.detail || error.message}`)
