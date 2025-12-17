@@ -13,7 +13,7 @@ class Payload(Base):
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     name = Column(String, nullable=False)
     owner = Column(String, nullable=True)
-    default_weight = Column(Float, nullable=True)  # in grams
+    default_weight = Column(Float, nullable=True)
     
     flights = relationship("Flight", back_populates="payload", cascade="all, delete-orphan")
 
@@ -27,7 +27,7 @@ class Flight(Base):
     name = Column(String, nullable=True)
     description = Column(Text, nullable=True)
     location = Column(String, nullable=True)
-    custom_weight = Column(Float, nullable=True)  # in grams, overrides payload default_weight
+    custom_weight = Column(Float, nullable=True)
     
     payload = relationship("Payload", back_populates="flights")
     csv_files = relationship("CSVFile", back_populates="flight", cascade="all, delete-orphan")

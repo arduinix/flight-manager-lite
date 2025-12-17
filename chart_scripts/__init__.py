@@ -1,2 +1,1 @@
-# Chart scripts package
 
