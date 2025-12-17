@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # Frontend dev server (Next.js with hot-reload)
   frontend-dev:
